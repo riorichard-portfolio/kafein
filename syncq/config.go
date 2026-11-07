@@ -9,10 +9,6 @@ type Config struct {
 	NumWorkers       int           // default 1 worker
 	WorkerBatchSize  int           // default 200
 	WorkerLingerTime time.Duration // default 10*time.Millisecond
-
-	// producer config
-	NumPartition int // default 10
-
 }
 
 func (c *Config) check() {
@@ -30,9 +26,5 @@ func (c *Config) check() {
 
 	if c.WorkerLingerTime <= 0 {
 		c.WorkerLingerTime = 10 * time.Millisecond
-	}
-
-	if c.NumPartition <= 0 {
-		c.NumPartition = 10
 	}
 }
