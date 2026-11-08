@@ -2,26 +2,13 @@ package syncq
 
 import (
 	"context"
-	"sync/atomic"
-
-	"kafein/internal/hashing"
 )
 
 type Producer[Input any, Output any] struct {
-	taskQueues    []chan Task[Input, Output]
-	roundRobinIdx atomic.Uint64
+	taskQueue chan Task[Input, Output]
 }
 
-func (p *Producer[Input, Output]) AddTaskQ(ctx context.Context, in Input, taskCfg TaskCfg) (out Output, err error) {
-	var qIndice uint64
-	numPartitions := uint64(len(p.taskQueues))
-	if !taskCfg.IsWithPartition() {
-		counter := p.roundRobinIdx.Add(1)
-		qIndice = (counter - 1) % numPartitions
-	} else {
-		hash := hashing.Fnv1a(taskCfg.PartitionKey)
-		qIndice = hash % numPartitions
-	}
+func (p *Producer[Input, Output]) AddTaskQ(ctx context.Context, in Input) (out Output, err error) {
 	var failedOut Output
 	outChan := make(chan Output, 1)
 	errChan := make(chan error, 1)
@@ -29,7 +16,7 @@ func (p *Producer[Input, Output]) AddTaskQ(ctx context.Context, in Input, taskCf
 	case <-ctx.Done():
 		return failedOut, ctx.Err()
 
-	case p.taskQueues[qIndice] <- Task[Input, Output]{
+	case p.taskQueue <- Task[Input, Output]{
 		input:    in,
 		replyOut: outChan,
 		replyErr: errChan,
