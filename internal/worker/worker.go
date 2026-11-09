@@ -11,11 +11,31 @@ type worker[Task any] struct {
 	taskQueue  chan Task
 	batchSize  int
 	lingerTime time.Duration
-	stopSign   chan struct{}
+	stopSignal chan struct{}
 	timeout    time.Duration
 }
 
+func New[Task any](
+	taskQueue chan Task,
+	batchSize int,
+	lingerTime time.Duration,
+	ftimeout time.Duration,
+) *worker[Task] {
+	stopSignal := make(chan struct{}, 1)
+	return &worker[Task]{
+		taskQueue:  taskQueue,
+		batchSize:  batchSize,
+		lingerTime: lingerTime,
+		timeout:    ftimeout,
+		stopSignal: stopSignal,
+	}
+}
+
 type Flusher[Task any] func(ctx context.Context, tasks []Task)
+
+func (w *worker[Task]) Stop() {
+	w.stopSignal <- struct{}{}
+}
 
 func (w *worker[Task]) flushWithCtx(
 	flusher Flusher[Task],
@@ -38,7 +58,7 @@ func (w *worker[Task]) RunWorker(
 	defer t.Stop()
 	for {
 		select {
-		case <-w.stopSign:
+		case <-w.stopSignal:
 			t.Stop()
 			// stop need to drain first
 			for {
