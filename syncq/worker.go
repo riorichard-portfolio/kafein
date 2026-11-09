@@ -13,7 +13,7 @@ func (w *Worker[Input, Output]) Stop() {
 }
 
 func (w *Worker[Input, Output]) Run(
-	flusher worker.Flusher[Task[Input, Output]],
+	flusher qworker.Flusher[Task[Input, Output]],
 ) {
 	w.worker.RunWorker(flusher)
 }
