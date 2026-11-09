@@ -6,14 +6,14 @@ type Task[Input any, Output any] struct {
 	replyErr chan error
 }
 
-func (q *Task[Input, Output]) GetInput() Input {
-	return q.input
+func (t *Task[Input, Output]) GetInput() Input {
+	return t.input
 }
 
-func (q *Task[Input, Output]) SendOutput(out Output) {
-	q.replyOut <- out
+func (t *Task[Input, Output]) SendOutput(out Output) {
+	t.replyOut <- out
 }
 
-func (q *Task[Input, Output]) SendError(err error) {
-	q.replyErr <- err
+func (t *Task[Input, Output]) SendError(err error) {
+	t.replyErr <- err
 }
