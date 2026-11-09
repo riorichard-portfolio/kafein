@@ -5,7 +5,7 @@ import (
 )
 
 type Worker[Input any, Output any] struct {
-	worker worker.Worker[Task[Input, Output]]
+	worker *worker.Worker[Task[Input, Output]]
 }
 
 func (w *Worker[Input, Output]) Stop() {
