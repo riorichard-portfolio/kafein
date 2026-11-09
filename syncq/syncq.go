@@ -5,6 +5,7 @@ import "kafein/internal/worker"
 func New[Input any, Output any](
 	config Config,
 ) (*Worker[Input, Output], *Producer[Input, Output]) {
+	config.check()
 	taskQueue := make(chan Task[Input, Output], config.QueueSize)
 	kafeinWorker := worker.New(
 		taskQueue,
