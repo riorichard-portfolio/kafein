@@ -1,11 +1,11 @@
 package syncq
 
 import (
-	"kafein/internal/worker"
+	"kafein/internal/qworker"
 )
 
 type Worker[Input any, Output any] struct {
-	worker *worker.Worker[Task[Input, Output]]
+	worker *qworker.Worker[Task[Input, Output]]
 }
 
 func (w *Worker[Input, Output]) Stop() {
