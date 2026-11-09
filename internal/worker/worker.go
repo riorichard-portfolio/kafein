@@ -7,7 +7,7 @@ import (
 	"kafein/internal/timer"
 )
 
-type worker[Task any] struct {
+type Worker[Task any] struct {
 	taskQueue  chan Task
 	batchSize  int
 	lingerTime time.Duration
@@ -20,9 +20,9 @@ func New[Task any](
 	batchSize int,
 	lingerTime time.Duration,
 	ftimeout time.Duration,
-) *worker[Task] {
+) *Worker[Task] {
 	stopSignal := make(chan struct{}, 1)
-	return &worker[Task]{
+	return &Worker[Task]{
 		taskQueue:  taskQueue,
 		batchSize:  batchSize,
 		lingerTime: lingerTime,
@@ -33,11 +33,11 @@ func New[Task any](
 
 type Flusher[Task any] func(ctx context.Context, tasks []Task)
 
-func (w *worker[Task]) Stop() {
+func (w *Worker[Task]) Stop() {
 	w.stopSignal <- struct{}{}
 }
 
-func (w *worker[Task]) flushWithCtx(
+func (w *Worker[Task]) flushWithCtx(
 	flusher Flusher[Task],
 	tasksBatch []Task,
 ) {
@@ -50,7 +50,7 @@ func (w *worker[Task]) flushWithCtx(
 	flusher(ctx, tasksBatch)
 }
 
-func (w *worker[Task]) RunWorker(
+func (w *Worker[Task]) RunWorker(
 	flusher Flusher[Task],
 ) {
 	tasksBatch := make([]Task, 0, w.batchSize)

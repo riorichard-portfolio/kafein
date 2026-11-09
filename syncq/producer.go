@@ -2,14 +2,23 @@ package syncq
 
 import (
 	"context"
+	"sync/atomic"
 )
 
 type Producer[Input any, Output any] struct {
 	taskQueue chan Task[Input, Output]
+	isStopped atomic.Bool
+}
+
+func (p *Producer[Input, Output]) Stop() {
+	p.isStopped.Store(true)
 }
 
 func (p *Producer[Input, Output]) AddTaskQ(ctx context.Context, in Input) (out Output, err error) {
 	var failedOut Output
+	if p.isStopped.Load() {
+		return failedOut, ProducerStoppedErr
+	}
 	outChan := make(chan Output, 1)
 	errChan := make(chan error, 1)
 	select {
