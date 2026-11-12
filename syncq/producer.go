@@ -3,11 +3,13 @@ package syncq
 import (
 	"context"
 	"sync/atomic"
+	"time"
 )
 
 type Producer[Input any, Output any] struct {
 	taskQueue chan Task[Input, Output]
 	isStopped atomic.Bool
+	deadline time.Duration
 }
 
 func (p *Producer[Input, Output]) Stop() {
@@ -38,6 +40,8 @@ func (p *Producer[Input, Output]) AddTaskQ(ctx context.Context, in Input) (out O
 		case <-ctx.Done():
 			return failedOut, ctx.Err()
 		}
+		case <-time.After(p.deadline):
+            return failedOut, DeadlineErr
 	default:
 		return failedOut, QueueFullErr
 	}

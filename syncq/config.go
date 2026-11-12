@@ -9,6 +9,9 @@ type Config struct {
 	WorkerBatchSize  int           // default 200
 	WorkerLingerTime time.Duration // default 10*time.Millisecond
 	FTimeout         time.Duration // flusher timeout default 200*time.Millisecond
+
+	// producer config
+	PDeadline time.Duration // deadline of producer waiting reply default 200*time.Millisecond
 }
 
 func (c *Config) check() {
@@ -26,5 +29,9 @@ func (c *Config) check() {
 
 	if c.FTimeout <= 0 {
 		c.FTimeout = 200 * time.Millisecond
+	}
+
+	if c.PDeadline <= 0 {
+		c.PDeadline = 200 * time.Millisecond
 	}
 }

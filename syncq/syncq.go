@@ -18,6 +18,7 @@ func New[Input any, Output any](
 	}
 	producer := &Producer[Input, Output]{
 		taskQueue: taskQueue,
+		deadline: config.PDeadline,
 	}
 	producer.isStopped.Store(false)
 	return worker, producer
