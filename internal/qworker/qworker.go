@@ -3,6 +3,7 @@ package qworker
 import (
 	"context"
 	"time"
+	"fmt"
 
 	"kafein/internal/timer"
 )
@@ -41,6 +42,11 @@ func (w *Worker[Task]) flushWithCtx(
 	flusher Flusher[Task],
 	tasksBatch []Task,
 ) {
+	defer func() {
+        if r := recover(); r != nil {
+            fmt.Printf("[CRITICAL] Worker panicked: %v\n", r)
+        }
+    }()
 	if len(tasksBatch) <= 0 {
 		return
 	}
