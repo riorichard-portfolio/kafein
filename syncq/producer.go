@@ -9,7 +9,7 @@ import (
 type Producer[Input any, Output any] struct {
 	taskQueue chan Task[Input, Output]
 	isStopped atomic.Bool
-	deadline time.Duration
+	deadline  time.Duration
 }
 
 func (p *Producer[Input, Output]) Stop() {
@@ -39,9 +39,9 @@ func (p *Producer[Input, Output]) AddTaskQ(ctx context.Context, in Input) (out O
 			return failedOut, err
 		case <-ctx.Done():
 			return failedOut, ctx.Err()
-		}
 		case <-time.After(p.deadline):
-            return failedOut, DeadlineErr
+			return failedOut, DeadlineErr
+		}
 	default:
 		return failedOut, QueueFullErr
 	}
