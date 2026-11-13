@@ -14,6 +14,7 @@ type Worker[Task any] struct {
 	lingerTime time.Duration
 	stopSignal chan struct{}
 	timeout    time.Duration
+	errHandler func(err error)
 }
 
 func New[Task any](
@@ -21,6 +22,7 @@ func New[Task any](
 	batchSize int,
 	lingerTime time.Duration,
 	ftimeout time.Duration,
+	errHandler func(err error),
 ) *Worker[Task] {
 	stopSignal := make(chan struct{}, 1)
 	return &Worker[Task]{
@@ -29,6 +31,7 @@ func New[Task any](
 		lingerTime: lingerTime,
 		timeout:    ftimeout,
 		stopSignal: stopSignal,
+		errHandler: errHandler,
 	}
 }
 
@@ -36,14 +39,22 @@ func (w *Worker[Task]) Stop() {
 	w.stopSignal <- struct{}{}
 }
 
-func (w *Worker[Task]) flushWithCtx(
-	flusher func(ctx context.Context, tasks []Task),
+func (w *Worker[Task]) handleFlushErr(err error) {
+	if w.errHandler != nil && err != nil {
+		w.errHandler(err)
+	}
+}
+
+func (w *Worker[Task]) flush(
+	flusher func(ctx context.Context, tasks []Task) error,
 	tasksBatch []Task,
 ) {
+	var err error
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Printf("[CRITICAL] Worker panicked: %v\n", r)
+			err = fmt.Errorf("[CRITICAL] Worker panicked: %v", r)
 		}
+		w.handleFlushErr(err)
 	}()
 	if len(tasksBatch) <= 0 {
 		return
@@ -51,11 +62,11 @@ func (w *Worker[Task]) flushWithCtx(
 	ctx, cancel := context.WithTimeout(context.Background(), w.timeout)
 	defer cancel()
 
-	flusher(ctx, tasksBatch)
+	err = flusher(ctx, tasksBatch)
 }
 
 func (w *Worker[Task]) RunWorker(
-	flusher func(ctx context.Context, tasks []Task),
+	flusher func(ctx context.Context, tasks []Task) error,
 ) {
 	go func() {
 		tasksBatch := make([]Task, 0, w.batchSize)
@@ -70,26 +81,26 @@ func (w *Worker[Task]) RunWorker(
 					select {
 					case task, ok := <-w.taskQueue:
 						if !ok {
-							w.flushWithCtx(flusher, tasksBatch)
+							w.flush(flusher, tasksBatch)
 							return
 						}
 						tasksBatch = append(tasksBatch, task)
 
 						// checking if batch is full then flush current draining
 						if len(tasksBatch) >= w.batchSize {
-							w.flushWithCtx(flusher, tasksBatch)
+							w.flush(flusher, tasksBatch)
 							tasksBatch = tasksBatch[:0]
 						}
 					default:
 						// not receiving any task drained complete need to flush
-						w.flushWithCtx(flusher, tasksBatch)
+						w.flush(flusher, tasksBatch)
 						return
 					}
 				}
 			case task, ok := <-w.taskQueue:
 				if !ok {
 					// when queue channel failed flush data for the last time
-					w.flushWithCtx(flusher, tasksBatch)
+					w.flush(flusher, tasksBatch)
 					return
 				}
 
@@ -102,12 +113,12 @@ func (w *Worker[Task]) RunWorker(
 				if len(tasksBatch) >= w.batchSize {
 					t.Stop()
 					// when batch full run flusher
-					w.flushWithCtx(flusher, tasksBatch)
+					w.flush(flusher, tasksBatch)
 					tasksBatch = tasksBatch[:0]
 				}
 			case <-t.Timeout():
 				// when linger time over
-				w.flushWithCtx(flusher, tasksBatch)
+				w.flush(flusher, tasksBatch)
 				tasksBatch = tasksBatch[:0]
 			}
 		}

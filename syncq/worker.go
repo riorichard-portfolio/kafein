@@ -15,7 +15,7 @@ func (w *worker[Input, Output]) Stop() {
 }
 
 func (w *worker[Input, Output]) Run(
-	flusher func(ctx context.Context, tasks []Task[Input, Output]),
+	flusher func(ctx context.Context, tasks []Task[Input, Output]) error,
 ) {
 	w.worker.RunWorker(flusher)
 }

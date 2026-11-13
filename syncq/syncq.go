@@ -12,6 +12,7 @@ func New[Input any, Output any](
 		config.WorkerBatchSize,
 		config.WorkerLingerTime,
 		config.FTimeout,
+		config.ErrHandler,
 	)
 	worker := &worker[Input, Output]{
 		worker: kafeinWorker,
