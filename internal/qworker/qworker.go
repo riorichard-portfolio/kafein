@@ -32,14 +32,12 @@ func New[Task any](
 	}
 }
 
-type Flusher[Task any] func(ctx context.Context, tasks []Task)
-
 func (w *Worker[Task]) Stop() {
 	w.stopSignal <- struct{}{}
 }
 
 func (w *Worker[Task]) flushWithCtx(
-	flusher Flusher[Task],
+	flusher func(ctx context.Context, tasks []Task),
 	tasksBatch []Task,
 ) {
 	defer func() {
@@ -57,7 +55,7 @@ func (w *Worker[Task]) flushWithCtx(
 }
 
 func (w *Worker[Task]) RunWorker(
-	flusher Flusher[Task],
+	flusher func(ctx context.Context, tasks []Task),
 ) {
 	go func() {
 		tasksBatch := make([]Task, 0, w.batchSize)

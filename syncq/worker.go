@@ -1,19 +1,21 @@
 package syncq
 
 import (
+	"context"
+
 	"kafein/internal/qworker"
 )
 
-type Worker[Input any, Output any] struct {
+type worker[Input any, Output any] struct {
 	worker *qworker.Worker[Task[Input, Output]]
 }
 
-func (w *Worker[Input, Output]) Stop() {
+func (w *worker[Input, Output]) Stop() {
 	w.worker.Stop()
 }
 
-func (w *Worker[Input, Output]) Run(
-	flusher qworker.Flusher[Task[Input, Output]],
+func (w *worker[Input, Output]) Run(
+	flusher func(ctx context.Context, tasks []Task[Input, Output]),
 ) {
 	w.worker.RunWorker(flusher)
 }

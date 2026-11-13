@@ -4,7 +4,7 @@ import "kafein/internal/qworker"
 
 func New[Input any, Output any](
 	config Config,
-) (*Worker[Input, Output], *Producer[Input, Output]) {
+) (*worker[Input, Output], *producer[Input, Output]) {
 	config.check()
 	taskQueue := make(chan Task[Input, Output], config.QueueSize)
 	kafeinWorker := qworker.New(
@@ -13,10 +13,10 @@ func New[Input any, Output any](
 		config.WorkerLingerTime,
 		config.FTimeout,
 	)
-	worker := &Worker[Input, Output]{
+	worker := &worker[Input, Output]{
 		worker: kafeinWorker,
 	}
-	producer := &Producer[Input, Output]{
+	producer := &producer[Input, Output]{
 		taskQueue: taskQueue,
 		deadline: config.PDeadline,
 	}

@@ -6,17 +6,17 @@ import (
 	"time"
 )
 
-type Producer[Input any, Output any] struct {
+type producer[Input any, Output any] struct {
 	taskQueue chan Task[Input, Output]
 	isStopped atomic.Bool
 	deadline  time.Duration
 }
 
-func (p *Producer[Input, Output]) Stop() {
+func (p *producer[Input, Output]) Stop() {
 	p.isStopped.Store(true)
 }
 
-func (p *Producer[Input, Output]) AddTaskQ(ctx context.Context, in Input) (out Output, err error) {
+func (p *producer[Input, Output]) AddTaskQ(ctx context.Context, in Input) (out Output, err error) {
 	var failedOut Output
 	if p.isStopped.Load() {
 		return failedOut, ProducerStoppedErr
