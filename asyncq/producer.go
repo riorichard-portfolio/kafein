@@ -5,16 +5,16 @@ import (
 	"sync/atomic"
 )
 
-type Producer[Input any] struct {
+type producer[Input any] struct {
 	taskQueue chan Task[Input]
 	isStopped atomic.Bool
 }
 
-func (p *Producer[Input]) Stop() {
+func (p *producer[Input]) Stop() {
 	p.isStopped.Store(true)
 }
 
-func (p *Producer[Input]) AddTaskQ(ctx context.Context, in Input) (err error) {
+func (p *producer[Input]) AddTaskQ(ctx context.Context, in Input) (err error) {
 	if p.isStopped.Load() {
 		return ProducerStoppedErr
 	}

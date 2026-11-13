@@ -1,19 +1,21 @@
 package asyncq
 
 import (
+	"context"
+
 	"kafein/internal/qworker"
 )
 
-type Worker[Input any] struct {
+type worker[Input any] struct {
 	worker *qworker.Worker[Task[Input]]
 }
 
-func (w *Worker[Input]) Stop() {
+func (w *worker[Input]) Stop() {
 	w.worker.Stop()
 }
 
-func (w *Worker[Input]) Run(
-	flusher qworker.Flusher[Task[Input]],
+func (w *worker[Input]) Run(
+	flusher func(ctx context.Context, tasks []Task[Input]),
 ) {
 	w.worker.RunWorker(flusher)
 }
