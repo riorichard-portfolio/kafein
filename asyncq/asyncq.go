@@ -1,6 +1,6 @@
 package asyncq
 
-import "kafein/internal/qworker"
+import "github.com/riorichard-portfolio/kafein/internal/qworker"
 
 func New[Input any](
 	config Config,

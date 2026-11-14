@@ -3,7 +3,7 @@ package asyncq
 import (
 	"context"
 
-	"kafein/internal/qworker"
+	"github.com/riorichard-portfolio/kafein/internal/qworker"
 )
 
 type worker[Input any] struct {

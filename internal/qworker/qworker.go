@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"kafein/internal/timer"
+	"github.com/riorichard-portfolio/kafein/internal/timer"
 )
 
 type Worker[Task any] struct {
