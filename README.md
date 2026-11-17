@@ -55,7 +55,10 @@
 
 ## Proof of Work (PoW)
 
-*(Di bawah bagian ADR ini, kita tempatkan PoW-001, PoW-002, dan PoW-003 berisi hasil benchmark `go test -bench=. -benchmem`, rasio coalescing, dan kesimpulan masing-masing).*
+---
+* **Repository Reference:** [kafein-proof-of-work](https://github.com/riorichard-portfolio/kafein-proof-of-work)
+* **Test Environment:** Local machine, Intel Core i5-1334U, PostgreSQL Windows Installed, Windows PowerShell / k6 load testing tool.
+---
 
 # PoW-001: High-Concurrency Hot-Row Ledger Updates via Work-Coalescing (`syncq`)
 
@@ -82,11 +85,6 @@ Instead of allowing hundreds of concurrent goroutines to execute independent dat
 Both architectures were subjected to identical stress-testing conditions using `k6` under a ramp-up workload scaling up to **200 concurrent Virtual Users (VUs)** for **50 seconds** against a single hot-row account.
 
 ### Comparative Performance Matrix
-
----
-* **Repository Reference:** [kafein-proof-of-work](https://github.com/riorichard-portfolio/kafein-proof-of-work)
-* **Test Environment:** Local machine, Intel Core i5-1334U, PostgreSQL Windows Installed, Windows PowerShell / k6 load testing tool.
----
 
 | Metric | Baseline (Direct GORM Transactions) | With `kafein/syncq` (Work-Coalescing) | Performance Delta / Improvement |
 | :--- | :--- | :--- | :--- |
