@@ -62,6 +62,8 @@
 
 # PoW-001: High-Concurrency Hot-Row Ledger Updates via Work-Coalescing (`syncq`)
 
+* **k6 Script Reference :**  syncq-pay.js in kafein-proof-of-work Repo
+
 ## 1. Context & Problem Statement
 In high-throughput transactional systems (e.g., payment gateways, financial ledgers, digital wallets), concurrent updates targeting a single "hot-row" account create severe database bottlenecks. 
 
@@ -113,3 +115,45 @@ INFO[0050] Expected Amount Delta   : 3002510
 INFO[0050] Actual Balance Delta    : 3002510
 INFO[0050] ========================================
 INFO[0050] ✅ [SUCCESS] Data 100% Accurate! Zero Lost Updates detected.
+```
+
+
+# PoW-002: Aggressive Load Shedding & Bounded Memory Backpressure under Extreme Admission Pressure (`QueueSize: 5`, `BatchSize: 5`)
+
+* **k6 Script Reference :**  syncq-pay-backpreassure.js in kafein-proof-of-work Repo
+
+## 1. Context & Architectural Challenge
+In high-concurrency systems, traffic surges (such as flash sales or DDoS-like traffic spikes) often exceed backend processing capacity. 
+
+Without proper admission control, unbounded request queues lead to **Out-Of-Memory (OOM) crashes**, connection pool exhaustion, and catastrophic cascading failures across downstream dependencies. While high throughput is vital, **graceful degradation and bounded safety** are critical architectural invariants for resilient system design.
+
+---
+
+## 2. Architectural Solution: Bounded Buffer & Load Shedding
+To enforce strict resource guarantees, `kafein/syncq` utilizes fixed-capacity memory structures (`QueueSize: 5`, `WorkerBatchSize: 5`). 
+
+When incoming request volume drastically outpaces worker flush velocity, the internal queue hits capacity instantly. Rather than blocking indefinitely or allocating unbounded heap memory, `syncq` triggers **immediate load shedding (fail-fast rejection)**. Excess requests are safely shed at the admission gate, preserving process stability and guaranteeing deterministic memory footprints under extreme pressure.
+
+---
+
+## 3. Empirical Stress Test Results (Extreme Saturation)
+
+The application was subjected to an aggressive ramp-up scaling up to **500 concurrent Virtual Users (VUs)** over **50 seconds** against an intentionally constrained queue capacity (`QueueSize = 5`).
+
+### Quantitative Stress-Test Metrics
+
+| Metric | Measured Value | Architectural Interpretation |
+| :--- | :--- | :--- |
+| **Total Requests Flooded** | `657,342 requests` | Massive load surge hitting a tightly bound queue |
+| **Throughput (RPS)** | `13,145.79 req/s` | High-speed request ingestion and rejection loop |
+| **Queue Rejection Rate** | `96.25% (632,706 dropped)` | Aggressive load shedding protecting backend resources |
+| **Application Error Rate** | `0.00%` | Zero internal panics, unhandled exceptions, or OOM crashes |
+| **P95 Latency (Overall)** | `48.36 ms` | Request turnaround remains fast even during massive shedding |
+
+---
+
+## 4. Key Engineering Takeaways & Portfolio Impact
+
+1. **Deterministic Memory Bounds:** Despite handling over 657,000 requests under heavy VUs, heap allocation remained entirely flat because the queue capacity is statically bounded to 5 items.
+2. **Defensive Load Shedding (`Fail-Fast`):** The system successfully rejected 96.25% of traffic that exceeded capacity, preventing database connection lockouts and protecting system availability.
+3. **Graceful Recovery:** The application remained fully operational throughout the stress test and immediately resumed normal throughput during the cool-down phase without requiring service restarts.
