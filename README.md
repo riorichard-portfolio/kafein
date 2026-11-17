@@ -85,7 +85,7 @@ Both architectures were subjected to identical stress-testing conditions using `
 
 ---
 * **Repository Reference:** [kafein-proof-of-work](https://github.com/riorichard-portfolio/kafein-proof-of-work)
-* **Test Environment:** Local machine, Intel Core i5-1334U, PostgreSQL Docker container, Windows PowerShell / k6 load testing tool.
+* **Test Environment:** Local machine, Intel Core i5-1334U, PostgreSQL Windows Installed, Windows PowerShell / k6 load testing tool.
 ---
 
 | Metric | Baseline (Direct GORM Transactions) | With `kafein/syncq` (Work-Coalescing) | Performance Delta / Improvement |
