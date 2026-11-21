@@ -6,7 +6,7 @@ func New[Input any](
 	config Config,
 ) (*worker[Input], *producer[Input]) {
 	config.check()
-	taskQueue := make(chan Task[Input], config.QueueSize)
+	taskQueue := make(chan flushTask[Input], config.QueueSize)
 	kafeinWorker := qworker.New(
 		taskQueue,
 		config.WorkerBatchSize,

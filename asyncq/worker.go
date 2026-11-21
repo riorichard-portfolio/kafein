@@ -7,7 +7,7 @@ import (
 )
 
 type worker[Input any] struct {
-	worker *qworker.Worker[Task[Input]]
+	worker *qworker.Worker[flushTask[Input]]
 }
 
 func (w *worker[Input]) Stop() {
@@ -17,5 +17,5 @@ func (w *worker[Input]) Stop() {
 func (w *worker[Input]) Run(
 	flusher func(ctx context.Context, tasks []Task[Input]) error,
 ) {
-	w.worker.RunWorker(flusher)
+	// w.worker.RunWorker(flusher)
 }

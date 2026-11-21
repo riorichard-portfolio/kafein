@@ -3,11 +3,13 @@ package asyncq
 import (
 	"context"
 	"sync/atomic"
+	"time"
 )
 
 type producer[Input any] struct {
-	taskQueue chan Task[Input]
+	taskQueue chan flushTask[Input]
 	isStopped atomic.Bool
+	deadline  time.Duration
 }
 
 func (p *producer[Input]) Stop() {
@@ -18,14 +20,17 @@ func (p *producer[Input]) AddTaskQ(ctx context.Context, in Input) (err error) {
 	if p.isStopped.Load() {
 		return ProducerStoppedErr
 	}
+	errChan := make(chan error, 1)
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 
-	case p.taskQueue <- Task[Input]{
-		input: in,
+	case p.taskQueue <- flushTask[Input]{
+		input:    in,
+		replyErr: errChan,
 	}:
-		return nil
+		err := <-errChan
+		return err
 	default:
 		return QueueFullErr
 	}
