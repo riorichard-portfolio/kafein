@@ -7,7 +7,7 @@ import (
 )
 
 type producer[Input any] struct {
-	taskQueue chan flushTask[Input]
+	taskQueue chan flushdTask[Input]
 	isStopped atomic.Bool
 	deadline  time.Duration
 }
@@ -25,7 +25,7 @@ func (p *producer[Input]) AddTaskQ(ctx context.Context, in Input) (err error) {
 	case <-ctx.Done():
 		return ctx.Err()
 
-	case p.taskQueue <- flushTask[Input]{
+	case p.taskQueue <- flushdTask[Input]{
 		input:    in,
 		replyErr: errChan,
 	}:

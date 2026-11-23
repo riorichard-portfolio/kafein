@@ -7,7 +7,11 @@ import (
 )
 
 type worker[Input any] struct {
-	worker *qworker.Worker[flushTask[Input]]
+	worker        *qworker.Worker[flushdTask[Input]]
+	walPath       string
+	commitedPath  string
+	corruptedPath string
+	tempPath      string
 }
 
 func (w *worker[Input]) Stop() {
