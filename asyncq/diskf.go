@@ -40,11 +40,14 @@ func (w *worker[Input]) flushToDisk(ctx context.Context, tasks []flushdTask[Inpu
 		return fmt.Errorf("failed to write wal on temporary dir:%w", err)
 	}
 	isFileOpen := true
+	isFileOnTemp := true
 	defer func() {
 		if isFileOpen {
 			file.Close()
 		}
-		os.Remove(tempDirPath)
+		if isFileOnTemp {
+			os.Remove(tempDirPath)
+		}
 	}()
 
 	// payload from all inputs in single slice preparing for encoding
@@ -130,7 +133,7 @@ func (w *worker[Input]) flushToDisk(ctx context.Context, tasks []flushdTask[Inpu
 		w.flushFailed(tasks)
 		return fmt.Errorf("failed to rename file path to wal directory:%w", err)
 	}
-
+	isFileOnTemp = false
 	// 6. Sync the walPath for durability
 	dir, err := os.Open(w.walPath)
 	if err != nil {
