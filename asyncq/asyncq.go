@@ -32,7 +32,7 @@ func New[Input any](
 		config.WorkerLingerTime,
 		config.FTimeout,
 		func(err error) {
-			fmt.Printf("FATAL: ERROR ON WAL WRITER: %w", err)
+			fmt.Printf("FATAL: ERROR ON WAL WRITER: %v", err)
 		},
 	)
 	worker := &worker[Input]{
