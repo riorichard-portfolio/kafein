@@ -1,6 +1,10 @@
 package asyncq
 
-import "github.com/riorichard-portfolio/kafein/internal/qworker"
+import (
+	"fmt"
+
+	"github.com/riorichard-portfolio/kafein/internal/qworker"
+)
 
 var (
 	durablePathExists = map[string]struct{}{}
@@ -27,14 +31,18 @@ func New[Input any](
 		config.WorkerBatchSize,
 		config.WorkerLingerTime,
 		config.FTimeout,
-		config.ErrHandler,
+		func(err error) {
+			fmt.Printf("FATAL: ERROR ON WAL WRITER: %w", err)
+		},
 	)
 	worker := &worker[Input]{
-		worker:        kafeinWorker,
-		walPath:       joinPath(durablePath, wal),
-		commitedPath:  joinPath(durablePath, commited),
-		corruptedPath: joinPath(durablePath, corrupted),
-		tempPath:      joinPath(durablePath, temp),
+		worker:           kafeinWorker,
+		walPath:          joinPath(durablePath, wal),
+		commitedPath:     joinPath(durablePath, commited),
+		corruptedPath:    joinPath(durablePath, corrupted),
+		tempPath:         joinPath(durablePath, temp),
+		readerSig:        make(chan struct{}, 1),
+		readerErrHandler: config.ErrHandler,
 	}
 	producer := &producer[Input]{
 		taskQueue: taskQueue,
