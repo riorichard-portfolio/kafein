@@ -1,17 +1,17 @@
 package asyncq
 
 import (
-	"context"
-
 	"github.com/riorichard-portfolio/kafein/internal/qworker"
 )
 
 type worker[Input any] struct {
-	worker        *qworker.Worker[flushdTask[Input]]
-	walPath       string
-	commitedPath  string
-	corruptedPath string
-	tempPath      string
+	worker           *qworker.Worker[flushdTask[Input]]
+	walPath          string
+	commitedPath     string
+	corruptedPath    string
+	tempPath         string
+	readerSig        chan struct{}
+	readerErrHandler func(walPath WALPath, err error)
 }
 
 func (w *worker[Input]) Stop() {
@@ -19,7 +19,14 @@ func (w *worker[Input]) Stop() {
 }
 
 func (w *worker[Input]) Run(
-	flusher func(ctx context.Context, tasks []Task[Input]) error,
+	flusher func(tasks []Task[Input]) error,
 ) {
-	// w.worker.RunWorker(flusher)
+	// run kafein worker (goroutine) to flush to disk when running
+	w.worker.RunWorker(w.flushToDisk)
+
+	// background for wal reader , first scan then accepting reader signal
+	go func() {
+		w.readWAL(flusher)
+		w.readWALOnSIG(flusher)
+	}()
 }
