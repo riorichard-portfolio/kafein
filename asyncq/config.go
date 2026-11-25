@@ -9,10 +9,10 @@ type Config struct {
 	QueueSize int // default 1000 max queue size
 
 	// worker config
-	WorkerBatchSize  int             // default 200
-	WorkerLingerTime time.Duration   // default 10*time.Millisecond
-	FTimeout         time.Duration   // flusher timeout default 200*time.Millisecond
-	ErrHandler       func(err error) // flusher error handler default only printing error
+	WorkerBatchSize  int                              // default 200
+	WorkerLingerTime time.Duration                    // default 10*time.Millisecond
+	FTimeout         time.Duration                    // flusher timeout default 200*time.Millisecond
+	ErrHandler       func(walPath WALPath, err error) // flusher error handler default only print error & file path
 }
 
 func (c *Config) check() {
@@ -33,8 +33,8 @@ func (c *Config) check() {
 	}
 
 	if c.ErrHandler == nil {
-		c.ErrHandler = func(err error) {
-			fmt.Printf("flusher error with error: %+v", err)
+		c.ErrHandler = func(walPath WALPath, err error) {
+			fmt.Printf("%s error in reader: %v", walPath.path, err)
 		}
 	}
 }

@@ -21,3 +21,11 @@ func mkDirAll(durablePath string) error {
 func joinPath(durablePath string, dir dirType) string {
 	return filepath.Join(durablePath, string(dir))
 }
+
+type WALPath struct {
+	path string
+}
+
+func (w *WALPath) Path() string {
+	return w.path
+}
