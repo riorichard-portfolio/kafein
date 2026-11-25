@@ -31,7 +31,7 @@ func (w *worker[Input]) flushSuccess(tasks []flushdTask[Input]) {
 func (w *worker[Input]) flushToDisk(ctx context.Context, tasks []flushdTask[Input]) error {
 	// wal file path targeting uniqueness in wal path
 	unixMs := time.Now().UnixMilli()
-	tempDirPath := filepath.Join(w.tempPath, fmt.Sprintf("%d.gob", unixMs))
+	tempDirPath := filepath.Join(w.tempPath, fmt.Sprintf("%d%s", unixMs, gobF))
 
 	// open first in temp directory
 	file, err := os.OpenFile(tempDirPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
@@ -112,7 +112,7 @@ func (w *worker[Input]) flushToDisk(ctx context.Context, tasks []flushdTask[Inpu
 	counter := -1 // counter for adding integer to avoid conflict
 	newWalDirPath := func() string {
 		counter++
-		return filepath.Join(w.walPath, fmt.Sprintf("%d-%d.gob", unixMs, counter))
+		return filepath.Join(w.walPath, fmt.Sprintf("%d-%d%s", unixMs, counter,gobF))
 	}
 	var walDirPath string
 	for {
@@ -147,5 +147,12 @@ func (w *worker[Input]) flushToDisk(ctx context.Context, tasks []flushdTask[Inpu
 		return fmt.Errorf("failed to move data from temp to wal for durability:%w", err)
 	}
 	w.flushSuccess(tasks)
+
+	// send reader signal to read WAL
+	select {
+	case w.readerSig <- struct{}{}:
+	default:
+	}
+
 	return nil
 }
